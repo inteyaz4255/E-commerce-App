@@ -5,6 +5,7 @@ import { connect } from 'mongoose'
 import connectDB from './config/mongodb.js'
 import connectCloudinary from './config/cloudinary.js'
 import userRouter from './routes/userRoutes.js'
+import productRouter from './routes/productRoute.js'
 
 //App Config
 
@@ -20,6 +21,7 @@ app.use(cors())
 //Api endpoints
 app.use('/api/user',userRouter)
 // app.user('/api/')
+app.use('/api/product',productRouter)
 app.get('/',(req,res)=>{
     res.send("API working")
 })
