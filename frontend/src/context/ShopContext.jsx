@@ -132,6 +132,18 @@ const ShopContextProvider = (props) =>{
         }
     }
 
+    const getUserCart = async (token) =>{
+        try {
+            const response = await axios.post(backendUrl + '/api/cart/get',{},{headers:{token}})
+            if(response.data.success){
+                setCartItems(response.data.cartData)
+            }
+        } catch (err) {
+            console.log(err)
+            toast.error(err.message)
+        }
+    }
+
     useEffect(()=>{
         getProductsData()
     },[])
@@ -140,7 +152,8 @@ const ShopContextProvider = (props) =>{
     useEffect(()=>{
         if(!token && localStorage.getItem('token')){
             setToken(localStorage.getItem('token'))
-            getCartData()
+            // getCartData()
+            getUserCart(localStorage.getItem('token'))
         }
     },[])
     
@@ -148,7 +161,7 @@ const ShopContextProvider = (props) =>{
     const value = {
         products ,currency , delivery_fee,
         search,setSearch,showSearch,setShowSearch,
-        cartItems,addToCart,
+        cartItems,addToCart,setCartItems,
         getCartCount,updateQuantity,getCartAmount,navigate,
         backendUrl,
         setToken,token,getCartData
