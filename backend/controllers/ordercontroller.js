@@ -1,6 +1,7 @@
 import userModal from '../models/userModal.js'
 import orderModel from "../models/orderModel.js"
 import Stripe from 'stripe'
+import razorpay from 'razorpay'
 // import { currency } from '../../admin/src/App.jsx'
 
 // global variables
@@ -9,6 +10,12 @@ const deliveryCharge = 10
 
 // gateway initialize
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
+const razorpayInstance = new razorpay({
+    key_id : process.env.RAZORPAY_KEY_ID,
+    key_secret : process.env.RAZORPAY_KEY_SECRET,
+
+})
 
 // Placing Order using COD Method
 
@@ -87,7 +94,7 @@ const placeOrderStripe = async (req,res) =>{
 
         const session = await stripe.checkout.sessions.create({
             success_url:`${origin}/verify?success=true&orderId=${newOrder._id}`,
-            cancel_url: `${origin}/verify?success=true&orderId=${newOrder._id}`, 
+            cancel_url: `${origin}/verify?success=false&orderId=${newOrder._id}`, 
             mode:'payment',
 
             line_items
@@ -102,7 +109,7 @@ const placeOrderStripe = async (req,res) =>{
 }
 
 // Verify stripe
-const verifyStripe = async () => {
+const verifyStripe = async (req,res) => {
     const {orderId,success,userId} = req.body
 
     try{
@@ -124,7 +131,59 @@ const verifyStripe = async () => {
 // Placing Order using Razorpay Method
 
 const placeOrderRazorpay = async (req,res) =>{
-    
+    try {
+        const {userId, items,amount,address} = req.body
+
+        const orderData = {
+            userId,
+            items,
+            address,
+            amount,
+            paymentMethod:"Razorpay",
+            payment:false,
+            date:Date.now()
+
+        }
+
+        const newOrder = new orderModel(orderData)
+        await newOrder.save()
+
+        const options = {
+            amount : amount*100,
+            currency : currency.toUpperCase(),
+            receipt : newOrder._id.toString()
+        }
+
+        await razorpayInstance.orders.create(options, (error,order)=>{
+            if(error){
+                console.log(error)
+                return res.json({success:false,message:error})
+            }
+            res.json({success:true,order})
+        })
+
+
+    } catch (err) {
+        console.log(err)
+        res.json({success:false,message:err.message})
+    }
+}
+
+const verifyRazorpay = async(req,res) => {
+    try{
+        const {userId,razorpay_order_id} = req.body
+        const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id)
+        if(orderInfo.status === 'paid'){
+            await orderModel.findByIdAndUpdate(orderInfo.receipt,{payment:true})
+            await userModal.findByIdAndUpdate(userId,{cartData:{}})
+            res.json({success:true,message:'Payment Successful'})
+        } else{
+            res.json({success:false,message:'Payment failed'})
+        }
+    }catch(err){
+        console.log(err)
+        res.json({success:false,message:err.message})
+    }
 }
 
 // All Orders data for Admin Panel
@@ -166,5 +225,5 @@ const updateStatus= async(req,res) =>{
     }
 }
 
-export { verifyStripe, placeOrder,placeOrderRazorpay,placeOrderStripe,updateStatus,allOrders,userOrders}
+export { verifyStripe, placeOrder,placeOrderRazorpay,placeOrderStripe,updateStatus,allOrders,userOrders,verifyRazorpay}
 

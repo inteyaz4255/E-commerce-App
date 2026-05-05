@@ -37,8 +37,10 @@ const Verify = () => {
     }
 
     useEffect(()=>{
-        verifyPayment()
-    },[])
+        if(token && orderId){
+            verifyPayment()
+        }
+    },[token, orderId])
   return (
     <div>
       
