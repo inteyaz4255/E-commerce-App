@@ -5,9 +5,9 @@ A full-stack e-commerce web application built using the MERN stack with secure o
 ---
 
 ## 🚀 Live Demo
-👉 forever-frontend-nu-five.vercel.app
+👉 https://forever-frontend-nu-five.vercel.app/
  ## ADMIN
- e-commerce-admin-five-brown.vercel.app
+ 👉 https://e-commerce-admin-five-brown.vercel.app/list
 
 ---
 
